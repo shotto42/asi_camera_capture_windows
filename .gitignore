@@ -1,0 +1,34 @@
+# --- generated build / package / installer output --------------------------
+# regenerate with:  build_win.bat all   (builds)
+#                   build_win.bat package  (assembles package_win\)
+#                   build_msi.bat        (dist\camera_app-1.0.0-x64.msi)
+/build_win/
+/package_win/
+/dist/
+
+# --- vendored third-party toolchains ----------------------------------------
+# ~2 GB of Qt 6.7.3 / OpenCV 4.12.0 / GStreamer 1.24.12 / CMake / WiX binaries.
+# Deliberately NOT committed: too large for a sane repo, and every piece is
+# re-downloadable + re-assembled on a fresh machine — sources and the assembly
+# recipe (including the MSYS2 mingw64/ucrt64 merge) are documented in the
+# README ("Prerequisites") and docs/build.md §5. The download scripts in
+# tools/ (dl.mjs, dlall.mjs, dlwix.mjs, gstsources*.mjs) automate most of it.
+/third_party/
+
+# --- runtime output folders -------------------------------------------------
+# created next to the exe on launch (photos/, videos/, sequences/)
+/photos/
+/videos/
+/sequences/
+
+# --- session artifacts, logs, screenshots -----------------------------------
+/_*.png
+*.log
+
+# --- compiled helper (source tools/capwin2.cpp IS tracked; rebuild per
+#     docs/build.md §5 after vcvars64) ----------------------------------------
+tools/*.exe
+
+# --- OS clutter ---------------------------------------------------------------
+Thumbs.db
+Desktop.ini

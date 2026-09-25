@@ -1,0 +1,16 @@
+# Sensible defaults for this Windows-first repo.
+* text=auto
+
+# Batch files MUST stay CRLF on checkout (cmd.exe edge cases with LF-only bats).
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary / non-text content — never diff or re-encode these.
+*.png binary
+*.ser binary
+*.dll binary
+*.lib binary
+*.exe binary
+*.7z binary
+*.zip binary
+*.msi binary
