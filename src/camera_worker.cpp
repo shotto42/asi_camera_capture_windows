@@ -331,9 +331,9 @@ void CameraWorker::run()
     {
         if (!reported)
         {
-            emit cameraError("No ASI camera found yet - waiting (check the USB connection; "
-                             "if the /dev node is missing create it with mknod, "
-                             "major:minor from /sys/bus/usb/devices/<usbX>/<port>/dev)");
+            emit cameraError("No ASI camera found yet - waiting (check the USB connection "
+                             "and the ZWO camera driver - README, Prerequisites step 2; "
+                             "no other program may be holding a camera)");
             reported = true;
         }
         if (nap(1000)) return;

@@ -94,11 +94,12 @@
 //                                  camera is connected: N is a CameraID of a
 //                                  connected camera, or its index in the
 //                                  enumeration (0-based, the number the
-//                                  selector dialog shows). Without it the app
-//                                  opens the first connected camera, and a
-//                                  plain interactive launch with two or more
-//                                  connected shows the selector dialog BEFORE
-//                                  the main window (Cancel = exit))
+//                                  selector dialog shows). Without it the
+//                                  selector dialog is shown BEFORE the main
+//                                  window on every launch (Cancel/Esc = exit
+//                                  without opening anything; clicking a row
+//                                  confirms that camera); with a single
+//                                  connected camera it is opened as before)
 
 #include <QApplication>
 #include <QFileInfo>
@@ -247,12 +248,15 @@ int main(int argc, char** argv)
     app.setStyleSheet(kStyleSheet);
 
     // ---- which camera to open (see camera_selector.h) ---------------------
-    // Decided BEFORE the main window appears. The enumeration reads /sys only
-    // (no camera is opened), so it is safe to do here. Headless self-tests
-    // never show the dialog (no user is there): they honour --camera and
-    // otherwise open the first connected camera, exactly as before this
-    // feature. An interactive launch with two or more connected cameras shows
-    // the selector first — its Cancel exits without opening anything.
+    // Decided BEFORE the main window appears. The enumeration only asks the
+    // SDK (no camera is opened), so it is safe to do here. With two or more
+    // connected cameras an interactive launch ALWAYS asks: the selector
+    // dialog is shown before the main window on every launch (Cancel/Esc
+    // exits without opening anything; clicking a row confirms that camera).
+    // The choice is deliberately NOT remembered — the user decides on every
+    // launch. Headless self-tests never show the dialog (no user is there):
+    // they honour --camera and otherwise open the first connected camera,
+    // exactly as before.
     const bool headless = smoke || seqtest || uishot || vtest || prevtest || fpstest;
     int cameraId = -1;                          // -1 = auto: first connected camera
     const auto cameras = enumerateCameras();
@@ -281,6 +285,8 @@ int main(int argc, char** argv)
     {
         if (cameras.size() > 1)
         {
+            // More than one body connected: ask on every launch (see the
+            // note above).
             cameraId = showCameraSelector(cameras);
             if (cameraId < 0)
             {
@@ -293,7 +299,9 @@ int main(int argc, char** argv)
                                  c.name.toLocal8Bit().constData(), c.id, c.index);
         }
         else if (cameras.size() == 1)
+        {
             cameraId = cameras[0].id;           // the only camera: no dialog, as before
+        }
         // none connected yet: proceed and let the worker's open loop wait for
         // a camera to appear (the usual "waiting for camera" state).
     }

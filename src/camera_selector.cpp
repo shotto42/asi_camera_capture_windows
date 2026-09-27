@@ -2,11 +2,13 @@
 //
 // Camera enumeration + the pre-GUI selector dialog (see camera_selector.h).
 //
-// The enumeration only reads /sys (no camera is opened), so it is safe to run
+// The enumeration only asks the SDK (no camera is opened), so it is safe to run
 // before the worker thread starts and even while another process holds a
-// camera. The dialog is a plain QDialog with a QListWidget + Ok/Cancel; the
-// app-wide dark stylesheet already styles the buttons and labels, the list
-// gets its own scoped rules (see below).
+// camera. The dialog is a plain QDialog with a QListWidget + a single Cancel
+// button (there is no Ok: clicking a row confirms, so it was redundant); the
+// app-wide dark stylesheet already styles the button and the labels, the list
+// gets its own scoped rules (see below). Clicking a row confirms that camera
+// immediately (Enter also confirms the current row; Cancel/Esc exit).
 
 #include "camera_selector.h"
 
@@ -17,7 +19,10 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QListWidget>
+#include <QKeySequence>
+#include <QListWidgetItem>
 #include <QPushButton>
+#include <QShortcut>
 #include <QVBoxLayout>
 
 #include <cstdio>
@@ -31,12 +36,12 @@ std::vector<CameraOption> enumerateCameras()
         ASI_CAMERA_INFO info = {};
         if (ASIGetCameraProperty(&info, i) != ASI_SUCCESS)
         {
-            // The SDK still COUNTS this camera (enumeration needs only /sys),
-            // but it cannot be described — the documented symptom of a missing
-            // or non-0666 device node (docs/hardware.md). Offer only the
-            // cameras the app can actually open.
+            // The SDK still COUNTS this camera, but it cannot be
+            // described: the documented symptom of the missing ZWO camera
+            // driver (docs/hardware.md). Offer only the cameras the app can
+            // actually open.
             std::fprintf(stderr, "[cam] camera at index %d is connected but unreadable "
-                                 "(device node missing or not readable) - not offering it\n", i);
+                                 "(ZWO driver missing or not bound) - not offering it\n", i);
             continue;
         }
         CameraOption c;
@@ -82,6 +87,9 @@ int showCameraSelector(const std::vector<CameraOption>& cams)
                                        border-radius: 8px; }
         QListWidget#camSelList::item:hover { background: #3a3a3a; }
         QListWidget#camSelList::item:selected { background: #1976d2; color: #ffffff; }
+        /* Cancel: a touch-friendly footprint (there is no Ok button -
+           clicking a row confirms, so it was redundant). */
+        QDialog#camSel QPushButton { min-width: 190px; min-height: 60px; }
     )CSS");
 
     auto* lay = new QVBoxLayout(&dlg);
@@ -89,7 +97,7 @@ int showCameraSelector(const std::vector<CameraOption>& cams)
     lay->setSpacing(12);
 
     auto* head = new QLabel(
-        "More than one ASI camera is connected.\nWhich one should the app open?", &dlg);
+        "More than one ASI camera is connected.\nClick the one the app should open", &dlg);
     head->setObjectName("camSelHead");
     head->setAlignment(Qt::AlignHCenter);
     head->setWordWrap(true);
@@ -98,6 +106,7 @@ int showCameraSelector(const std::vector<CameraOption>& cams)
     auto* list = new QListWidget(&dlg);
     list->setObjectName("camSelList");
     list->setSelectionMode(QAbstractItemView::SingleSelection);
+    list->setCursor(Qt::PointingHandCursor);
     for (const auto& c : cams)
     {
         auto* item = new QListWidgetItem(
@@ -107,12 +116,24 @@ int showCameraSelector(const std::vector<CameraOption>& cams)
     list->setCurrentRow(0);
     lay->addWidget(list, 1);
 
-    auto* btns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
-    btns->button(QDialogButtonBox::Ok)->setDefault(true);   // Enter confirms, Esc cancels
+    // A single Cancel button: the Ok button was removed as redundant once
+    // clicking a row confirms that camera (see below). Esc still cancels.
+    auto* btns = new QDialogButtonBox(QDialogButtonBox::Cancel, &dlg);
     lay->addWidget(btns);
 
-    QObject::connect(btns, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     QObject::connect(btns, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    // Enter confirms the currently selected row (the keyboard path that the
+    // Ok button used to cover).
+    auto* enterKey = new QShortcut(QKeySequence(Qt::Key_Return), &dlg);
+    QObject::connect(enterKey, &QShortcut::activated, &dlg, &QDialog::accept);
+    // A click on a row confirms THAT camera (select + open in one gesture):
+    // the usual way to pick here is pointing at the body, not row-then-button.
+    // Enter still confirms the currently selected row for keyboard use.
+    QObject::connect(list, &QListWidget::itemClicked, &dlg,
+                     [&dlg, list](QListWidgetItem* it) {
+                         list->setCurrentItem(it);
+                         dlg.accept();
+                     });
 
     dlg.setMinimumWidth(440);
 

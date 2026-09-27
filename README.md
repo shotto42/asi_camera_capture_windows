@@ -276,14 +276,16 @@ above:
 
 ## Several cameras connected
 
-If **more than one ASI camera** is connected, the app shows a **selector
-before the main window appears** — a small window listing every connected
-camera (its index, name, mono/colour and sensor size) so you can pick the
-body you want. The app opens exactly the one you choose (the window title
-names it); **Cancel** quits. With a single camera there is no dialog — it is
-opened as before. You can also select from the command line with
-`camera_app.exe --camera N` (N = the number shown in the selector, or the
-camera's internal ID), which skips the dialog.
+If **more than one ASI camera** is connected, the app asks which one to open
+**on every launch**: a small window before the main window lists every
+connected camera (its index, name, mono/colour and sensor size) —
+**click the one the app should open** (that confirms it and the app opens;
+Enter confirms the highlighted row, **Cancel**/Esc quits without opening
+anything — there is no OK button, because clicking already confirms). The
+app opens exactly the body you choose (the window title names it). With a single camera there is no dialog — it is opened as before. You
+can also select from the command line with `camera_app.exe --camera N` (N =
+the number shown in the selector, or the camera's internal ID), which skips
+the dialog.
 
 ---
 

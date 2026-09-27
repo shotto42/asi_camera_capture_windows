@@ -41,13 +41,17 @@ save single-channel** — in every output (PNG/TIFF/MP4/`.ser`), see §6.5, §6.
 §6.7 and `colour.h/.cpp`.
 
 **Which body to open (multi-camera):** when more than one ASI camera is
-connected, a plain launch shows a **pre-GUI selector dialog** (before the
-main window appears) listing every connected camera; one connected camera is
-opened as before, headless self-tests never show the dialog. The choice
-(`--camera N` = CameraID or enumeration index, or the dialog) is handed to
-the worker, which re-finds that CameraID on every reconnect — first-connected
-camera as fallback (`camera_selector.h/.cpp`, `CameraWorker::setPreferredCamera`,
-§7, §6.2).
+connected, EVERY interactive launch shows the **pre-GUI selector dialog**
+before the main window appears (the choice is deliberately NOT remembered —
+the user is asked on every launch): it lists every connected camera,
+**clicking a row confirms that camera** (Enter also confirms the selected
+row; there is no Ok button — redundant once a click confirms; Cancel/Esc =
+exit without opening anything). One connected camera is opened as
+before; headless self-tests never show the dialog. The choice (`--camera N`
+= CameraID or enumeration index, or the dialog) is handed to the worker,
+which re-finds that CameraID on every reconnect — first-connected camera as
+fallback (`camera_selector.h/.cpp`, `CameraWorker::setPreferredCamera`, §7,
+§6.2).
 
 - **Photo mode** — a logarithmic exposure slider with a **range switch**
   (`0-1 s` / `1-60 s`, shown in photo **and** interval; hidden in video) and a
@@ -235,8 +239,9 @@ build_win\camera_app.exe --camera N
                       #   N = CameraID of a connected camera, or its 0-based
                       #   enumeration index (the number the selector dialog shows).
                       #   Without it: one camera -> opened as before; two or more
-                      #   -> a pre-GUI selector dialog is shown BEFORE the main
-                      #   window (Cancel exits; headless modes never show it).
+                      #   -> the pre-GUI selector dialog on EVERY launch (clicking
+                      #   a row confirms it; Cancel exits) - the choice is NOT
+                      #   remembered; headless modes never show it.
                       #   A value matching nothing exits 1 listing the bodies.
 build_win\camera_app.exe --capstest    # headless capability-model self-test (no camera): the
                          #   resolution candidates / offered depths / fps ceilings
@@ -308,13 +313,26 @@ touch the `photos/`, `videos/`, `sequences/` or `samples/` folders).
 
 ## 11. Possible next steps
 
-- **Multi-camera selector: ported from the Linux tree 2026-09-27, NOT yet
-  compiled or tested here.** `camera_selector.h/.cpp` + the `--camera` flag +
-  the preferred-CameraID reconnect logic (`CameraWorker::setPreferredCamera`)
-  were applied to this tree as-is from the Linux checkout, where the same
-  code was verified live on the ASI178MM + ASI178MC pair (the Linux
-  `docs/testing.md` §10.5). A first Windows build + the two-camera selector
-  flow (dialog, `--camera`, reconnect-by-ID) still need their first pass here.
+- **Multi-camera selector: ported from the Linux tree 2026-09-27, compiled +
+  verified on Windows the same day** (`camera_selector.h/.cpp` + the
+  `--camera` flag + the preferred-CameraID reconnect logic, §1). Verified on
+  the ASI178MM + ASI178MC pair: `--camera 0`/`1`, the pre-GUI dialog
+  (keyboard confirm) on the console AND the GUI-subsystem binary, main window
+  + camera open after the choice, no crash in the event log. **User report the
+  same day ("after selecting a camera the app does not start; the command
+  window is back instead of a native window app"):** the dialog was a new
+  gate on every launch and its rejection exits silently (no console on the
+  GUI build), so the user's workaround was the console twin (`--camera N`).
+  First fix the same day: the choice was **remembered** (QSettings per user)
+  so a plain launch opened the last chosen/opened body without the dialog,
+  plus **clicking a row in the dialog confirms that camera** (one gesture).
+  **User request the same day: the app must ask for the camera on EVERY
+  launch** — the remembered-choice feature was removed again (no QSettings),
+  so with two or more connected cameras the selector dialog is shown on every
+  interactive launch (headless self-tests still never show it), the dialog's
+  Ok button was removed as redundant once clicking a row confirms (Enter
+  still confirms the selected row; the single Cancel button is touch-sized,
+  `QDialog#camSel QPushButton { min-width: 190px; min-height: 60px; }`).
 - ~~10-bit H.264 or lossless video to preserve the full bit depth~~ — now done via
   the uncompressed **`.ser`** path (14-bit video, §6.5). (If a *compressed*
   16-bit MP4 is ever wanted, FFV1/UTVideo in an MKV would be the route.)

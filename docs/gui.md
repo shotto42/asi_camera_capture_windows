@@ -3,26 +3,37 @@
 ## 7. The GUI layout
 
 **Camera selector (before the main window, multi-camera only).** When more than
-one ASI camera is connected, a plain interactive launch first shows a small
-dark dialog — `camera_selector` (§6.1), driven from `main()` BEFORE
-`MainWindow` is created — listing every connected camera as
-`"N.  <name>   (<mono|colour> · WxH)"` (the enumeration index, the SDK name,
-and the body type + sensor size for disambiguation). The first entry is
-preselected; **Ok/Enter confirms, Cancel/Esc exits** the app without opening a
-camera (log line `[camera] no camera selected - exiting`). The main window
-appears only after the choice, and the worker opens exactly that body —
-remembered by its `CameraID` for every reconnect (a USB re-enumeration keeps
-the ID; if the body is gone entirely the first connected camera is opened
-instead and `cameraReady` re-labels the GUI — title, panel and status).
-One connected camera: no dialog, that camera is used (as before). None
-connected yet: no dialog either — the app proceeds and the worker's open loop
-shows the usual "waiting for camera" state. `--camera N` selects without the
-dialog (N = CameraID of a connected camera, else its list index; a value
-matching nothing exits 1 with the connected list on stderr). Headless
-self-tests (`--smoke`, `--vtest`, …) never show the dialog — they honour
-`--camera` or open the first connected camera. The dialog is a plain
-`QDialog` (list + `QDialogButtonBox` Ok/Cancel) with a scoped stylesheet; the
-app-wide dark theme already styles its buttons and labels.
+one ASI camera is connected, EVERY interactive launch first decides which
+body to open — `camera_selector` (§6.1), driven from `main()` BEFORE
+`MainWindow` is created:
+
+- **The choice is NOT remembered** (user request): the dialog is shown on
+  every interactive launch (log line `[camera] selected <name> (id …, index …)`).
+- **The dialog** — a small dark window listing every connected camera as
+  `"N.  <name>   (<mono|colour> · WxH)"` (the enumeration index, the SDK name,
+  and the body type + sensor size for disambiguation). The first entry is
+  preselected; **clicking a row confirms THAT camera and the app opens** (one
+  gesture, no second button); **Enter** confirms the selected row (there is
+  no Ok button — it was redundant once a click confirms), **Cancel/Esc** exit
+  the app without opening a camera (log line
+  `[camera] no camera selected - exiting`). The main window appears only after
+  the choice, and the worker opens exactly that body — remembered by its
+  `CameraID` for every reconnect (a USB re-enumeration keeps the ID; if the
+  body is gone entirely the first connected camera is opened instead and
+  `cameraReady` re-labels the GUI — title, panel and status).
+- One connected camera: no dialog, that camera is used (as before). None
+  connected yet: no dialog either — the app proceeds and the worker's open
+  loop shows the usual "waiting for camera" state.
+- `--camera N` selects without the dialog (N = CameraID of a connected
+  camera, else its list index; a value matching nothing exits 1 with the
+  connected list on stderr).
+- Headless self-tests (`--smoke`, `--vtest`, …) never show the dialog — they
+  honour `--camera` or open the first connected camera.
+
+The dialog is a plain `QDialog` (list + a single Cancel button — the Ok
+button was removed as redundant once clicking a row confirms) with a scoped
+stylesheet; the Cancel button is touch-sized (min-width 190px, min-height
+60px), on top of the app-wide dark theme.
 
 `MainWindow` is a 1440×900 window: `FrameView` on the left (expanding), a fixed
 ~420 px panel on the right. The **window title names the camera**

@@ -18,12 +18,14 @@
   `CameraCaps::roiCandidates()` aligns widths to 8 and heights to 4 (§6.2).
    The USB bus/device numbers change on re-plug, so never hardcode them - the
    app only uses the SDK's own enumeration, which does not.
-- **Several cameras at once:** the app opens ONE body at a time. With two or
-   more connected, a plain interactive launch shows the pre-GUI selector
-   dialog (or `--camera N` selects without it — §2, §7); the worker remembers
-   the opened CameraID for every reconnect (a USB re-enumeration keeps the ID;
-   first-connected camera as fallback, §6.2). `camera_probe` dumps every
-   connected body.
+ - **Several cameras at once:** the app opens ONE body at a time. With two or
+   more connected, EVERY interactive launch shows the pre-GUI selector
+   dialog (the choice is NOT remembered — the user is asked on every
+   launch): clicking a row confirms that camera (Enter confirms the
+   selected row, Cancel/Esc exit); `--camera N` selects without the dialog. The
+   worker remembers the opened CameraID for every reconnect (a USB
+   re-enumeration keeps the ID; first-connected camera as fallback, §6.2).
+   `camera_probe` dumps every connected body.
 - **"App waits for camera" = the ZWO driver was never installed.** The SDK
    on Windows needs a bound driver to do *anything*: a plugged-in camera shows
   `USB\VID_03C3&PID_178A` with **Problem 28 (CM_PROB_FAILED_INSTALL)**, class
