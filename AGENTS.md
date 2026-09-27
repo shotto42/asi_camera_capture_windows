@@ -401,3 +401,14 @@ touch the `photos/`, `videos/`, `sequences/` or `samples/` folders).
   double-click release test). For a public release the remaining step is
   **code signing** (Authenticode); the MSI creates no Start-Menu/desktop
   shortcut (README, "Installing the app").
+- **GitHub release asset upload gotcha (found 2026-09-27):** attach release
+  assets to the `upload_url` field of the release object — i.e.
+  **`https://uploads.github.com/repos/{owner}/{repo}/releases/{id}/assets?name={asset}`**
+  (POST, `Content-Type: application/octet-stream`, follow the 302 keeping the
+  POST; `curl --post302` works). POSTing to
+  `api.github.com/.../releases/{id}/assets?name=...` now returns **404** for
+  ANY token (the route no longer serves uploads; GETs there still work). The
+  token needs write access to the release (a classic PAT with `repo` or a
+  fine-grained PAT with Contents write + Metadata read); a GitHub OAuth
+  app-token (`gho_…`) can create/update releases but gets 404 on uploads.
+  The v1.1.0 release (zip + msi) was attached this way on 2026-09-27.
