@@ -177,7 +177,7 @@ build_win.bat all       # configure (vcvars64 + moc + CMake) + build (nmake)
 build_win.bat package   # self-contained package_win\ (GUI exe + every runtime DLL)
 build_win.bat clean     # remove build_win\ and package_win\
 build_msi.bat           # .msi installer (WiX 3.14.1, per-user, no UAC)
-                        #   -> dist\camera_app-1.0.0-x64.msi
+                        #   -> dist\camera_app-1.1.0-x64.msi
 
 package_win\camera_app.exe                        # run the GUI (from any CWD;
                                                   #   GUI-subsystem exe - opens
@@ -297,7 +297,7 @@ touch the `photos/`, `videos/`, `sequences/` or `samples/` folders).
 | `build_win/` | Generated artifacts: `moc_*.cpp`, CMake + nmake outputs, `gui/` (the GUI exe + its runtime tree) (all removed by `build_win.bat clean`). |
 | `CMakeLists.txt` | The Windows build (driven by `build_win.bat`; MSVC + nmake). Two targets from the SAME sources: `camera_app` (console-subsystem, kept for the headless self-tests) and `camera_app_gui` (`WIN32_EXECUTABLE`, `OUTPUT_NAME camera_app` — the GUI-subsystem binary that is distributed; entry point overridden to `mainCRTStartup`). Links the vendored ZWO SDK (imported `ASICamera2`), Qt6 Widgets, OpenCV and the mingw GStreamer import libs; post-build steps stage the runtime DLLs (OpenCV, ZWO, Qt, GStreamer, the 5 encoder plugins, the platform plugins) next to each exe (docs/build.md §5). |
 | `build_win.bat` | The build driver: finds `vcvars64.bat`, runs `moc` on the six `Q_OBJECT` headers, configures CMake (`NMake Makefiles`), builds with nmake; `all`/`package`/`clean` subcommands; assembles the self-contained `package_win\` folder. |
-| `build_msi.bat` | Packages `package_win\` into `dist\camera_app-1.0.0-x64.msi` with the vendored WiX Toolset 3.14.1 (`heat` + `candle` + `light`, per-user install, no UAC) — recipe and flag gotchas in docs/build.md §5. |
+| `build_msi.bat` | Packages `package_win\` into `dist\camera_app-1.1.0-x64.msi` with the vendored WiX Toolset 3.14.1 (`heat` + `candle` + `light`, per-user install, no UAC) — recipe and flag gotchas in docs/build.md §5. |
 | `README.md` | **User-facing** guide (install from `.msi`/zip + where the app and its files live, build + run + use Photo/Video/Interval). Shipped in `package_win/` and inside the `.msi`. |
 | `ASI_SDK/` | The build's SDK: the vendored ZWO SDK v1.41 **x64** — `x64/ASICamera2.lib` (import lib) + `x64/ASICamera2.dll` (runtime), the shared `ASICamera2.h` and the ZWO `license.txt`. CMake links the SDK as an imported shared library (`IMPORTED_IMPLIB` = the .lib) and the post-build step copies `ASICamera2.dll` next to each exe, so the binaries run from any directory (docs/build.md §5). |
 | `photos/` | Photo output (`photo_<yyyyMMdd_HHmmss>.png` or `.tif`). |

@@ -159,7 +159,7 @@ is the **GUI-subsystem** build (see above); the console twin stays in
 `build_win/` for the headless suites.
 
 **`.msi` installer (`build_msi.bat`, WiX Toolset 3.14.1).** The same
-`package_win/` tree is packaged into `dist/camera_app-1.0.0-x64.msi`. The
+`package_win/` tree is packaged into `dist/camera_app-1.1.0-x64.msi`. The
 toolset lives in `third_party/wix/` (candle/light/heat/dark + the extension
 DLLs), extracted from the community release `wix3141rtm` — GitHub org
 **`wixtoolset`** (the `wix3` org 404s), asset `wix314-binaries.zip`;
@@ -168,10 +168,10 @@ DLLs), extracted from the community release `wix3141rtm` — GitHub org
 ```
 heat   dir package_win -dr INSTALLFOLDER -cg PkgFiles -gg -sreg -scom -srd -nocomp -var var.SourceDir -nologo -out dist\wix\package_files.wxs
 candle -nologo -arch x64 -dSourceDir=%CD%\package_win -out dist\wix\ dist\wix\camera_app.wxs dist\wix\package_files.wxs
-light  -nologo -sval -cultures:en-US dist\wix\camera_app.wixobj dist\wix\package_files.wixobj -out dist\camera_app-1.0.0-x64.msi
+light  -nologo -sval -cultures:en-US dist\wix\camera_app.wixobj dist\wix\package_files.wixobj -out dist\camera_app-1.1.0-x64.msi
 ```
 
-Product "ASI Camera Capture" 1.0.0.0, `InstallScope=perUser` (installs to
+Product "ASI Camera Capture" 1.1.0.0, `InstallScope=perUser` (installs to
 `%LOCALAPPDATA%\ASI Camera Capture`, **no UAC**), fixed `UpgradeCode
 A42DE0D7-C7AB-4042-B913-8EEAE27BBF30` + `MajorUpgrade` for upgrades, 54
 components with heat-generated stable GUIDs, files flat under the install
@@ -230,7 +230,7 @@ The GUI-subsystem exe (`package_win/` and `build_win/gui/`) opens with **no
 console window** (window enumeration: no `ConsoleWindowClass`, Qt main
 window 1456×1043) and its live preview renders a real camera image. The MSI
 was verified end-to-end: `dark` decompiles all 54 files with the flat
-layout; `msiexec /i dist\camera_app-1.0.0-x64.msi /qn` installs to
+layout; `msiexec /i dist\camera_app-1.1.0-x64.msi /qn` installs to
 `%LOCALAPPDATA%\ASI Camera Capture` (exit 0, Add/Remove entry,
 GUI-subsystem exe), the installed app shows the live preview and passes
 `--capstest`, and `msiexec /x /qn` removes files and product state.

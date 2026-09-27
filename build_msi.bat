@@ -3,7 +3,7 @@ rem Windows installer (MSI) build for the ASI camera app (WiX Toolset 3.14.1).
 rem Usage: build_msi.bat
 rem   1. harvests package_win\ (run build_win.bat package first)
 rem   2. compiles dist\wix\camera_app.wxs + the harvested file list
-rem   3. links dist\camera_app-1.0.0-x64.msi (per-user install, no admin needed)
+rem   3. links dist\camera_app-1.1.0-x64.msi (per-user install, no admin needed)
 setlocal
 cd /d "%~dp0"
 
@@ -47,8 +47,8 @@ rem every ICE aborts the link (LGHT0217) even though the service is running.
 rem The install is simple (per-user, fixed file set, no custom
 rem actions/services/registry), so skip light's MSI validation here. Drop
 rem -sval on a normal desktop and let the ICEs run.
-third_party\wix\light.exe -nologo -sval -cultures:en-US dist\wix\camera_app.wixobj dist\wix\package_files.wixobj -out dist\camera_app-1.0.0-x64.msi
+third_party\wix\light.exe -nologo -sval -cultures:en-US dist\wix\camera_app.wixobj dist\wix\package_files.wixobj -out dist\camera_app-1.1.0-x64.msi
 if errorlevel 1 (echo link FAILED & exit /b 1)
 
-echo === done: dist\camera_app-1.0.0-x64.msi ===
+echo === done: dist\camera_app-1.1.0-x64.msi ===
 goto :eof

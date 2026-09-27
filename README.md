@@ -82,13 +82,13 @@ the same panel, with the **clipping warning** painted in its top-right corner
 You need one of two things — both have **identical contents** (the self-
 contained `package_win\` folder):
 
-* the **`.msi` installer** — `camera_app-1.0.0-x64.msi`, or
+* the **`.msi` installer** — `camera_app-1.1.0-x64.msi`, or
 * the **portable zip** — `asi_camera_capture-win-x64.zip` (a zipped
   `package_win\`).
 
 ### Option A: install with the .msi (recommended)
 
-1. Double-click `camera_app-1.0.0-x64.msi`.
+1. Double-click `camera_app-1.1.0-x64.msi`.
 2. A Windows Installer progress box appears and **finishes in a few seconds —
    it closing right away is the install succeeding, not a failure**: the
    installer has no setup screens and needs **no administrator rights**.
@@ -246,7 +246,7 @@ above:
   rights, nothing written to the registry, easy to move. Best for hand-offs
   and quick tests.
 * **`.msi` installer (per-user install).** `build_msi.bat` packages the same
-  folder into **`dist\camera_app-1.0.0-x64.msi`** with the **WiX Toolset
+  folder into **`dist\camera_app-1.1.0-x64.msi`** with the **WiX Toolset
   3.14.1** (vendored in `third_party\wix\`; if missing, fetch the `wix314`
   release binaries — `wix314-binaries.zip`,
   `https://github.com/wixtoolset/wix3/releases/tag/wix3141rtm` — into
@@ -264,8 +264,8 @@ above:
   signed install from Prerequisites. Install and uninstall silently:
 
   ```bat
-  msiexec /i dist\camera_app-1.0.0-x64.msi /qn
-  msiexec /x dist\camera_app-1.0.0-x64.msi /qn
+  msiexec /i dist\camera_app-1.1.0-x64.msi /qn
+  msiexec /x dist\camera_app-1.1.0-x64.msi /qn
   ```
 
   Both shapes ship the same verified bits; for a publicly distributed release
