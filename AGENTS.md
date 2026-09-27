@@ -40,6 +40,15 @@ from the probe and matters most: **`IsColorCam` bodies save RGB, mono bodies
 save single-channel** — in every output (PNG/TIFF/MP4/`.ser`), see §6.5, §6.6,
 §6.7 and `colour.h/.cpp`.
 
+**Which body to open (multi-camera):** when more than one ASI camera is
+connected, a plain launch shows a **pre-GUI selector dialog** (before the
+main window appears) listing every connected camera; one connected camera is
+opened as before, headless self-tests never show the dialog. The choice
+(`--camera N` = CameraID or enumeration index, or the dialog) is handed to
+the worker, which re-finds that CameraID on every reconnect — first-connected
+camera as fallback (`camera_selector.h/.cpp`, `CameraWorker::setPreferredCamera`,
+§7, §6.2).
+
 - **Photo mode** — a logarithmic exposure slider with a **range switch**
   (`0-1 s` / `1-60 s`, shown in photo **and** interval; hidden in video) and a
   big "Take photo" button that snaps one frame and saves it. Slider mapping is
@@ -221,6 +230,14 @@ build_win\camera_app.exe --fpstest
                       # format change), and a real format change (14-bit picked
                       # in photo mode) still re-snaps to the spec max.
                       # Prints FPSTEST PASS/FAIL, exit 0/1.
+build_win\camera_app.exe --camera N
+                      # which body to open when MORE THAN ONE camera is connected:
+                      #   N = CameraID of a connected camera, or its 0-based
+                      #   enumeration index (the number the selector dialog shows).
+                      #   Without it: one camera -> opened as before; two or more
+                      #   -> a pre-GUI selector dialog is shown BEFORE the main
+                      #   window (Cancel exits; headless modes never show it).
+                      #   A value matching nothing exits 1 listing the bodies.
 build_win\camera_app.exe --capstest    # headless capability-model self-test (no camera): the
                          #   resolution candidates / offered depths / fps ceilings
                          #   derived from what a camera reports, checked for an
@@ -274,8 +291,8 @@ touch the `photos/`, `videos/`, `sequences/` or `samples/` folders).
 
 | File | Purpose |
 |------|---------|
-| `include/` | All headers, one per module (`camera_worker.h`, `main_window.h`, `camera_caps.h`, `white_balance.h`, `colour.h`, `ser_writer.h`, `gst_video_encoder.h`, `display_frame.h`, `exposure.h`, `fps_spec.h`, `depth_code.h`, `constants.h`, `util.h`, `crash_handler.h`, `style.h`, and the GUI widgets `frame_view.h`, `histogram_widget.h`, `mode_toggle.h`, `shutter_button.h`, `record_button.h`, `sequence_button.h`). The six `Q_OBJECT` classes are declared here; `build_win.bat` runs `moc` on their headers into `build_win/moc_*.cpp` (CMake AUTOMOC is off on this box — see docs/build.md §5). |
-| `src/` | Application sources, one `.cpp` per module: `main.cpp` (entry point + flag dispatch), `main_window.cpp` (GUI wiring; the constructor is split into `setupUi`/`setupConnections`/`setupInitialState`), `camera_worker.cpp` (all capture logic), `white_balance.cpp` (the Kelvin/Tint <-> gains model, §6.9), `ser_writer.cpp`, `gst_video_encoder.cpp`, `display_frame.cpp` (thumbnail downscale), `exposure.cpp` (slider mapping + formatting), `fps_spec.cpp` (ZWO fps table), `crash_handler.cpp`, `style.cpp` (stylesheet), `util.cpp` (`timestamp()` + the CAMDBG debug flag), and one `.cpp` per GUI widget (`frame_view`, `histogram_widget`, `mode_toggle`, `shutter_button`, `record_button`, `sequence_button`). |
+| `include/` | All headers, one per module (`camera_worker.h`, `main_window.h`, `camera_caps.h`, `white_balance.h`, `colour.h`, `ser_writer.h`, `gst_video_encoder.h`, `display_frame.h`, `exposure.h`, `fps_spec.h`, `depth_code.h`, `constants.h`, `util.h`, `camera_selector.h`, `crash_handler.h`, `style.h`, and the GUI widgets `frame_view.h`, `histogram_widget.h`, `mode_toggle.h`, `shutter_button.h`, `record_button.h`, `sequence_button.h`). The six `Q_OBJECT` classes are declared here; `build_win.bat` runs `moc` on their headers into `build_win/moc_*.cpp` (CMake AUTOMOC is off on this box — see docs/build.md §5). |
+| `src/` | Application sources, one `.cpp` per module: `main.cpp` (entry point + flag dispatch + the pre-GUI camera choice, §1), `camera_selector.cpp` (multi-camera enumeration + the pre-GUI selector dialog), `main_window.cpp` (GUI wiring; the constructor is split into `setupUi`/`setupConnections`/`setupInitialState`), `camera_worker.cpp` (all capture logic), `white_balance.cpp` (the Kelvin/Tint <-> gains model, §6.9), `ser_writer.cpp`, `gst_video_encoder.cpp`, `display_frame.cpp` (thumbnail downscale), `exposure.cpp` (slider mapping + formatting), `fps_spec.cpp` (ZWO fps table), `crash_handler.cpp`, `style.cpp` (stylesheet), `util.cpp` (`timestamp()` + the CAMDBG debug flag), and one `.cpp` per GUI widget (`frame_view`, `histogram_widget`, `mode_toggle`, `shutter_button`, `record_button`, `sequence_button`). |
 | `tests/` | Headless self-test suites linked into the app and driven from `main()`: `ser_writer_test.cpp` (`--sertest`), `frame_view_test.cpp` (`--frametest`), `camera_caps_test.cpp` (`--capstest`), `colour_test.cpp` (`--colourtest`), `wb_test.cpp` (`--wbtest`), declared in `test_suites.h`. `camera_probe.cpp` is a **standalone** raw-SDK dump of everything a camera reports (info, control caps + live value readback, ROI acceptance per format) — `camera_probe.exe` (CMake `-DBUILD_PROBES=ON`). `usb_bench.cpp` is a **standalone** raw-SDK USB throughput probe (its own `main`, built separately — see its header comment); it drains the video stream in a tight loop with no GUI/encoding/disk, isolating the camera→USB→host path from the app. `wb_probe.cpp` is a **standalone** white-balance MEASUREMENT probe: it checks the body's WB caps, whether the WB controls really are linear multipliers, where its AWB converges and whether that neutralizes a white target, and prints the neutral (6500 K) gain pair that `wbMeasuredNeutral()` in `white_balance.cpp` stores — re-run it when a colour body is added or its anchor is doubted. All three are excluded from the `camera_app` link and built as standalone CMake targets (`-DBUILD_PROBES=ON`). |
 | `build_win/` | Generated artifacts: `moc_*.cpp`, CMake + nmake outputs, `gui/` (the GUI exe + its runtime tree) (all removed by `build_win.bat clean`). |
 | `CMakeLists.txt` | The Windows build (driven by `build_win.bat`; MSVC + nmake). Two targets from the SAME sources: `camera_app` (console-subsystem, kept for the headless self-tests) and `camera_app_gui` (`WIN32_EXECUTABLE`, `OUTPUT_NAME camera_app` — the GUI-subsystem binary that is distributed; entry point overridden to `mainCRTStartup`). Links the vendored ZWO SDK (imported `ASICamera2`), Qt6 Widgets, OpenCV and the mingw GStreamer import libs; post-build steps stage the runtime DLLs (OpenCV, ZWO, Qt, GStreamer, the 5 encoder plugins, the platform plugins) next to each exe (docs/build.md §5). |
@@ -291,6 +308,13 @@ touch the `photos/`, `videos/`, `sequences/` or `samples/` folders).
 
 ## 11. Possible next steps
 
+- **Multi-camera selector: ported from the Linux tree 2026-09-27, NOT yet
+  compiled or tested here.** `camera_selector.h/.cpp` + the `--camera` flag +
+  the preferred-CameraID reconnect logic (`CameraWorker::setPreferredCamera`)
+  were applied to this tree as-is from the Linux checkout, where the same
+  code was verified live on the ASI178MM + ASI178MC pair (the Linux
+  `docs/testing.md` §10.5). A first Windows build + the two-camera selector
+  flow (dialog, `--camera`, reconnect-by-ID) still need their first pass here.
 - ~~10-bit H.264 or lossless video to preserve the full bit depth~~ — now done via
   the uncompressed **`.ser`** path (14-bit video, §6.5). (If a *compressed*
   16-bit MP4 is ever wanted, FFV1/UTVideo in an MKV would be the route.)

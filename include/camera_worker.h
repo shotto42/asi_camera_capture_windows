@@ -145,6 +145,13 @@ public:
     // Escape hatch: use a Bayer pattern other than the one the SDK reports
     // (--bayer rggb|bggr|grbg|gbrg; -1 = use the camera's own). See colour.h.
     void setBayerOverride(int pattern) { bayerOverride_ = pattern; }
+    // Which body to open when more than one is connected: the CameraID chosen
+    // at startup (the pre-GUI selector or --camera). -1 = auto: the first
+    // connected camera (the pre-multi-camera behaviour). Must be called before
+    // the first open; afterwards the ID of the first successful open is
+    // remembered, so a reconnect re-opens the SAME body (and only falls back
+    // to the first connected camera when that body is gone entirely).
+    void setPreferredCamera(int id) { preferredId_ = id; }
 
     int frameWidth()  const { return w_; }
     int frameHeight() const { return h_; }
@@ -255,6 +262,9 @@ private:
     Telemetry tele_;
 
     int cam_ = -1;
+    int preferredId_ = -1;        // CameraID the user chose (-1 = auto/first);
+                                  // after the first open, the opened body's ID
+                                  // (see setPreferredCamera)
     int fullW_ = 0, fullH_ = 0;   // sensor max size (full ROI)
     int w_ = 0, h_ = 0;           // current ROI size (worker thread writes)
     int bpp_ = 1;

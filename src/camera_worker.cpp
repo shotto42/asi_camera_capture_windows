@@ -59,13 +59,36 @@ int CameraWorker::selectWritableRawSlot()
 // instead of running on.
 bool CameraWorker::openCamera()
 {
-    if (ASIGetNumOfConnectedCameras() <= 0) return false;
+    const int n = ASIGetNumOfConnectedCameras();
+    if (n <= 0) return false;
+    // The body the user picked at startup (the pre-GUI selector or --camera)
+    // wins on EVERY open, including reconnects: a USB re-enumeration keeps the
+    // CameraID, so the same body is found again. When it is gone entirely,
+    // fall back to the first connected camera instead of dead-ending — the
+    // GUI is told which body actually opened by cameraReady and re-labels
+    // itself (title + panel rebuilt from the fresh probe).
+    int idx = 0;
+    if (preferredId_ >= 0)
+    {
+        bool found = false;
+        for (int i = 0; i < n; ++i)
+        {
+            ASI_CAMERA_INFO t = {};
+            if (ASIGetCameraProperty(&t, i) == ASI_SUCCESS && t.CameraID == preferredId_)
+            { idx = i; found = true; break; }
+        }
+        if (!found)
+            std::fprintf(stderr, "[cam] selected camera (id %d) no longer connected - "
+                                 "opening the first connected camera instead\n", preferredId_);
+    }
     ASI_CAMERA_INFO info = {};
-    if (ASIGetCameraProperty(&info, 0) != ASI_SUCCESS) return false;
+    if (ASIGetCameraProperty(&info, idx) != ASI_SUCCESS) return false;
     int id = info.CameraID;
     if (ASIOpenCamera(id) != ASI_SUCCESS) return false;
     if (ASIInitCamera(id) != ASI_SUCCESS) { ASICloseCamera(id); return false; }
     cam_ = id;
+    if (preferredId_ < 0)
+        preferredId_ = id;   // remember what opened so a reconnect re-finds it
 
     // Everything the app adapts to — sensor size, mono vs colour, which readouts
     // exist, the gain/exposure ranges — comes from this probe. A reconnect can
@@ -99,8 +122,12 @@ bool CameraWorker::openCamera()
     hasHsm_    = caps.hasHighSpeedMode;
     const int bayerOv = bayerOverride_;
     bayer_ = (bayerOv >= 0) ? bayerOv : caps.bayer;
-    std::fprintf(stderr, "[cam] %s%s%s\n", caps.name.toLatin1().constData(),
-                 caps.isColor ? "" : " (mono output)", "");
+    {
+        char multi[32] = "";
+        if (n > 1) std::snprintf(multi, sizeof multi, "  [%d/%d]", idx + 1, n);
+        std::fprintf(stderr, "[cam] %s%s%s\n", caps.name.toLatin1().constData(),
+                     caps.isColor ? "" : " (mono output)", multi);
+    }
     if (caps.isColor)
         std::fprintf(stderr, "[cam] colour body: Bayer %s (SDK) -> saving RGB%s\n",
                      bayerPatternName((int)caps.bayer),

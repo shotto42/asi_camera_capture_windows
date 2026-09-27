@@ -41,7 +41,8 @@ public:
                         bool prevtest = false, int pvW = 480, int pvH = 320,
                         int pvBits = 14, double pvExp = 0.1, double pvDur = 6.0,
                         double pvExp2 = 0.0, bool fpstest = false,
-                        int bayerOverride = -1, bool vtSerOut = true);
+                        int bayerOverride = -1, bool vtSerOut = true,
+                        int cameraId = -1);
 
     ~MainWindow() override
     {

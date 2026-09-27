@@ -49,7 +49,8 @@ MainWindow::MainWindow(bool smoke, bool seqtest,
                        double stExp, double stInterval, int stCount,
                        bool vtest, int vtW, int vtH, int vtBits, int vtFps, double vtDur,
                        bool prevtest, int pvW, int pvH, int pvBits, double pvExp, double pvDur,
-                       double pvExp2, bool fpstest, int bayerOverride, bool vtSerOut)
+                       double pvExp2, bool fpstest, int bayerOverride, bool vtSerOut,
+                       int cameraId)
 {
     // The title names the camera once it answers (cameraReady); until then it
     // stays honest — this build drives any ASI camera, not one model.
@@ -58,6 +59,8 @@ MainWindow::MainWindow(bool smoke, bool seqtest,
     bayerOverride_ = bayerOverride;
     if (bayerOverride_ >= 0)
         worker_.setBayerOverride(bayerOverride_);   // must be set before the open
+    if (cameraId >= 0)
+        worker_.setPreferredCamera(cameraId);       // same: before the first open
 
     setupUi();
     setupConnections();

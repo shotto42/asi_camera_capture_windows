@@ -46,7 +46,19 @@ The app is one module per file (`include/<name>.h` + `src/<name>.cpp`):
     §6.4), `bayerToRgbCode()`/`demosaicBayerToRgb()` for the interleaved-RGB
     `.ser`, and `paintClipRed()`
     (shared with the mono path) (§6.3, §6.5–§6.7).
-11. Supporting modules: `main` (entry point, flag dispatch, uishot),
+11. **`camera_selector`** (`camera_selector`) — which body to open when more
+    than one ASI camera is connected. `enumerateCameras()` lists the connected
+    cameras WITHOUT opening any of them (SDK enumeration reads /sys only, so it
+    is safe before the worker starts and while another process holds a
+    camera); `showCameraSelector()` is the small dark dialog shown by
+    `main()` BEFORE the main window appears (two or more connected cameras,
+    interactive launch only — headless self-tests never show it) and Cancel
+    exits; `resolveCameraValue()` maps a `--camera` value (CameraID first,
+    then list index) to the body to open. The chosen CameraID is handed to the
+    worker, which re-finds it by ID on every reconnect (fallback: the first
+    connected camera, §6.2).
+12. Supporting modules: `main` (entry point, flag dispatch, uishot, the
+    pre-GUI camera choice),
    `display_frame` (worker-side thumbnail downscale `buildDisplayFrame`),
    `exposure` (slider↔seconds mapping + formatting), `fps_spec` (ZWO fps table),
    `depth_code` (combo item-data encoding), `constants`, `util`

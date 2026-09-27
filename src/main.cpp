@@ -89,6 +89,16 @@
 //                                  slider keeps its value across a
 //                                  video->photo->video round trip, and a real
 //                                  format change still re-snaps to the spec max)
+//         ./camera_app --camera N
+//                                  (which body to open when more than one ASI
+//                                  camera is connected: N is a CameraID of a
+//                                  connected camera, or its index in the
+//                                  enumeration (0-based, the number the
+//                                  selector dialog shows). Without it the app
+//                                  opens the first connected camera, and a
+//                                  plain interactive launch with two or more
+//                                  connected shows the selector dialog BEFORE
+//                                  the main window (Cancel = exit))
 
 #include <QApplication>
 #include <QFileInfo>
@@ -101,6 +111,7 @@
 #endif
 
 #include <camera_caps.h>
+#include <camera_selector.h>
 #include <crash_handler.h>
 #include <main_window.h>
 #include <shutter_button.h>
@@ -122,6 +133,7 @@ int main(int argc, char** argv)
     bool smoke = false, seqtest = false, sertest = false, uishot = false, frametest = false, vtest = false, prevtest = false, fpstest = false;
     bool capstest = false, colourtest = false, wbtest = false;
     int  bayerOverride = -1;      // --bayer rggb|bggr|grbg|gbrg (colour bodies only)
+    QString camArg;               // --camera <CameraID|index> (multi-camera selection)
     QString uishotFile;
     double stExp = 0.5, stInterval = 5.0;
     int stCount = 3, uiMode = -1;   // uiMode: --mode 0|1|2 (photo/interval/video), uishot only
@@ -173,6 +185,12 @@ int main(int argc, char** argv)
         {
             uishot = true;
             uishotFile = QString::fromLocal8Bit(argv[++i]);
+        }
+        else if (std::strcmp(argv[i], "--camera") == 0 && i + 1 < argc)
+        {
+            // Which body to open when more than one is connected (CameraID of
+            // a connected camera, or its 0-based enumeration index).
+            camArg = QString::fromLocal8Bit(argv[++i]);
         }
         else if (std::strcmp(argv[i], "--mode") == 0 && i + 1 < argc)        uiMode     = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--seqexp") == 0 && i + 1 < argc)      stExp      = std::atof(argv[++i]);
@@ -228,9 +246,61 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
     app.setStyleSheet(kStyleSheet);
 
+    // ---- which camera to open (see camera_selector.h) ---------------------
+    // Decided BEFORE the main window appears. The enumeration reads /sys only
+    // (no camera is opened), so it is safe to do here. Headless self-tests
+    // never show the dialog (no user is there): they honour --camera and
+    // otherwise open the first connected camera, exactly as before this
+    // feature. An interactive launch with two or more connected cameras shows
+    // the selector first — its Cancel exits without opening anything.
+    const bool headless = smoke || seqtest || uishot || vtest || prevtest || fpstest;
+    int cameraId = -1;                          // -1 = auto: first connected camera
+    const auto cameras = enumerateCameras();
+    if (!camArg.isEmpty())
+    {
+        cameraId = resolveCameraValue(cameras, camArg);
+        if (cameraId < 0)
+        {
+            std::fprintf(stderr, "[camera] --camera %s: %s\n",
+                         camArg.toLocal8Bit().constData(),
+                         cameras.empty() ? "no cameras connected yet"
+                                         : "matches none of the connected cameras:");
+            for (const auto& c : cameras)
+                std::fprintf(stderr, "    %d: %s   (%s, id %d)\n", c.index,
+                             c.name.toLocal8Bit().constData(),
+                             c.detail.toLocal8Bit().constData(), c.id);
+            return 1;
+        }
+        for (const auto& c : cameras)
+            if (c.id == cameraId)
+                std::fprintf(stderr, "[camera] --camera %s -> %s (id %d, index %d)\n",
+                             camArg.toLocal8Bit().constData(),
+                             c.name.toLocal8Bit().constData(), c.id, c.index);
+    }
+    else if (!headless)
+    {
+        if (cameras.size() > 1)
+        {
+            cameraId = showCameraSelector(cameras);
+            if (cameraId < 0)
+            {
+                std::fprintf(stderr, "[camera] no camera selected - exiting\n");
+                return 0;
+            }
+            for (const auto& c : cameras)
+                if (c.id == cameraId)
+                    std::fprintf(stderr, "[camera] selected %s (id %d, index %d)\n",
+                                 c.name.toLocal8Bit().constData(), c.id, c.index);
+        }
+        else if (cameras.size() == 1)
+            cameraId = cameras[0].id;           // the only camera: no dialog, as before
+        // none connected yet: proceed and let the worker's open loop wait for
+        // a camera to appear (the usual "waiting for camera" state).
+    }
+
     MainWindow w(smoke, seqtest, stExp, stInterval, stCount, vtest, vtW, vtH, vtBits, vtFps, vtDur,
                  prevtest, pvW, pvH, pvBits, pvExp, pvDur, pvExp2, fpstest, bayerOverride,
-                 vtSer != 0);
+                 vtSer != 0, cameraId);
     w.show();
 
     if (uishot)
