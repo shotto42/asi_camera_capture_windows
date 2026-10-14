@@ -1,8 +1,6 @@
 # ASI Camera App
 
-Project article: [A Linux Capture App for ZWO ASI Cameras](https://hotto.de/software-hardware/a-linux-capture-app-for-the-zwo-asi178mm/)
-(the article is from the project's Linux era — the build it describes was
-reworked into the pure-Windows build documented here).
+Project article: [A Capture App for ZWO ASI Cameras](https://hotto.de/software-hardware/a-linux-capture-app-for-the-zwo-asi178mm/)
 
 ## Use cases
 
